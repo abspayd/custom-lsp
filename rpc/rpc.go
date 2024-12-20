@@ -5,12 +5,9 @@ package rpc
 //  https://www.jsonrpc.org/specification
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
-	"strings"
 )
 
 const (
@@ -48,7 +45,7 @@ type (
 		JsonRPC string `json:"jsonrpc"` // MUST be "2.0"
 		Id      int    `json:"id"`
 		Method  string `json:"method"`
-		Params  *any   `json:"params,omitempty"`
+		Params  any    `json:"params,omitempty"`
 	}
 
 	Notification struct {
@@ -118,40 +115,4 @@ func DecodeNotification(data []byte) (Notification, error) {
 	}
 
 	return notification, nil
-}
-
-func Start() {
-
-	// Quick test
-	out := bufio.NewWriter(os.Stdout)
-	in := bufio.NewReader(os.Stdin)
-
-	// Send initial message
-	fmt.Println("LSP Listening on stdin...")
-	out.Flush()
-
-	for {
-		fmt.Println()
-		fmt.Print("input: ")
-		str, err := in.ReadString('\n')
-		if err != nil {
-			// Close out the program
-			out.Flush()
-			os.Exit(0)
-		}
-
-		str, found := strings.CutSuffix(str, "\n")
-		if !found {
-			panic("This should be impossible")
-		}
-
-		msg := &Response{
-			Id:     1,
-			Result: str,
-		}
-		rsp, err := Encode(msg)
-
-		fmt.Fprint(out, rsp)
-		out.Flush()
-	}
 }

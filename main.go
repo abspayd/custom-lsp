@@ -1,9 +1,9 @@
 package main
 
 import (
-	"custom-lsp/rpc"
+	"custom-lsp/lsp"
 )
 
 func main() {
-    rpc.Start()
+    lsp.Start()
 }
