@@ -16,11 +16,9 @@ func Start() {
 	// Send initial message
 	for {
 		str, err := in.ReadString('\n')
-		// scanner.Scan()
 		if err != nil {
-			// Close out the program
-			out.Flush()
-            return
+            // unexpected error
+            os.Exit(1)
 		}
 
 		str, found := strings.CutSuffix(str, "\n")
@@ -36,5 +34,8 @@ func Start() {
 
 		fmt.Fprint(out, rsp)
 		out.Flush()
+
+        // just loop once (for now)
+        return
 	}
 }
