@@ -50,14 +50,14 @@ func TestStart(t *testing.T) {
 	os.Stdout = p2w
 
 	lsp.Start()
-    p2w.Close()
 
-	var b bytes.Buffer
-	_, err = b.ReadFrom(p2r)
-	if err != nil {
-		t.Fatal(err)
-	}
+    var b bytes.Buffer
+    n, err := b.ReadFrom(p2r)
+    output := make([]byte, n)
+    _, err = b.Read(output)
+    if err != nil {
+        t.Fatal(err)
+    }
 
-	output := b.String()
-	t.Fatal(output)
+    t.Fatal(string(output))
 }
