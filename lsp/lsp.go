@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// TODO: Should this go inside the rpc module instead?
 func readHeader(r io.Reader) ([]string, error) {
 	reader := bufio.NewReader(r)
 
