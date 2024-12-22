@@ -9,7 +9,7 @@ import (
 )
 
 func Start() {
-	headers, err := rpc.ReadHeader(os.Stdin)
+	headers, err := rpc.ReadHeaders(os.Stdin)
 	if err != nil {
 		panic(fmt.Sprintf("Unable to read header: %v", err))
 	}
