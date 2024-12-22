@@ -1,8 +1,6 @@
 package main
 
-import (
-	"custom-lsp/lsp"
-)
+import "custom-lsp/lsp"
 
 func main() {
     lsp.Start()

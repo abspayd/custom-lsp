@@ -132,6 +132,16 @@ func ReadRequest(r io.Reader) (header Header, content Request, err error) {
 	return header, content, nil
 }
 
+func (r *Response) Send(w io.Writer) error {
+	encoded_response, err := Encode(r)
+	if err != nil {
+		return err
+	}
+	r.JsonRPC = "2.0"
+	w.Write([]byte(encoded_response))
+	return nil
+}
+
 func (r *Response) Format() {
 	r.JsonRPC = "2.0"
 }

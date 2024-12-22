@@ -10,15 +10,28 @@ var (
 	accepted_methods = map[string]func() (string, error){
 		"textDocument/rename":  rename,
 		"textDocument/context": context,
+		"shutdown":             shutdown,
+		"exit":                 exit,
 	}
 )
 
 func rename() (string, error) {
-	return "Rename!", nil
+	return "TODO: Rename", nil
 }
 
 func context() (string, error) {
-	return "", nil
+	return "TODO: Context", nil
+}
+
+func shutdown() (string, error) {
+	// TODO
+	return "ok", nil
+}
+
+func exit() (string, error) {
+	// TODO
+    // This is sent via a notification; do not respond.
+	return "ok", nil
 }
 
 func Start() {
@@ -28,20 +41,16 @@ func Start() {
 			panic(fmt.Sprintf("Unable to read request: %v", err))
 		}
 
-		// TODO: process received request
-		id := content.Id // keep this for the response
-		method := content.Method
-
-		f, ok := accepted_methods[method]
+		f, ok := accepted_methods[content.Method]
 		if !ok {
 			// respond with error method not found (rpc.MethodNotFound)
 			err_msg := rpc.ResponseError{
 				Code:    rpc.MethodNotFound,
-				Message: fmt.Sprintf("Unknown method: \"%s\"", method),
+				Message: fmt.Sprintf("Unknown method: \"%s\"", content.Method),
 			}
 			response := &rpc.Response{
 				JsonRPC: "2.0",
-				Id:      id,
+				Id:      content.Id,
 				Error:   &err_msg,
 			}
 
@@ -56,13 +65,13 @@ func Start() {
 
 		// execute the method
 		res, err := f()
-        if err != nil {
-            panic(fmt.Sprintf("Method %s returned with an error: %v", method, err))
-        }
+		if err != nil {
+			panic(fmt.Sprintf("Method %s returned with an error: %v", content.Method, err))
+		}
 
 		response := &rpc.Response{
 			JsonRPC: "2.0",
-			Id:      id,
+			Id:      content.Id,
 			Result:  res,
 		}
 		encoded_response, err := rpc.Encode(response)
@@ -82,41 +91,4 @@ func Start() {
 		os.Stdout.Close()
 		return // loop one time (for now)
 	}
-
-	// TODO: is the method call case insensitive in the LSP spec?
-
-	// TODO: loop two previous steps (list and process)
-
-	/*
-		// Quick test
-		out := bufio.NewWriter(os.Stdout)
-		in := bufio.NewReader(os.Stdin)
-
-		// Send initial message
-		for {
-			str, err := in.ReadString('\n')
-			if err != nil {
-				// unexpected error
-				os.Exit(1)
-			}
-
-			str, found := strings.CutSuffix(str, "\n")
-			if !found {
-				panic("This should be impossible")
-			}
-
-			msg := &rpc.Response{
-				Id:     1,
-				Result: str,
-			}
-			rsp, err := rpc.Encode(msg)
-
-			fmt.Fprint(out, rsp)
-			out.Flush()
-
-			// just loop once (for now)
-			os.Stdout.Close()
-			return
-		}
-	*/
 }
