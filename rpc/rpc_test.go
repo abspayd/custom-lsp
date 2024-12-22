@@ -2,8 +2,11 @@ package rpc_test
 
 import (
 	"custom-lsp/rpc"
+	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -75,7 +78,6 @@ func TestDecodeRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	decoded_request, err := rpc.DecodeRequest([]byte(request_message))
 	if err != nil {
 		t.Fatal(err)
@@ -89,4 +91,43 @@ func TestDecodeRequest(t *testing.T) {
 	if !reflect.DeepEqual(original_request, decoded_request) {
 		t.Fatalf("%#v != %#v", original_request, decoded_request)
 	}
+}
+
+func TestReadHeader(t *testing.T) {
+	request := &rpc.Request{
+		JsonRPC: "2.0",
+		Id:      1,
+		Method:  "textDocument/rename",
+	}
+	content, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected_headers := map[string]string{
+		"Content-Length": string(fmt.Sprintf("%d", len(content))),
+	}
+
+	r, w := io.Pipe()
+
+	encoded_request, err := rpc.Encode(request)
+
+	// write to the pipe
+    go func() {
+        w.Close()
+        w.Write([]byte(encoded_request))
+    }()
+
+	headers, err := rpc.ReadHeaders(r)
+	if err != nil && err != io.EOF {
+		t.Fatal(err)
+	}
+
+	content_length, err := strconv.Atoi(expected_headers["Content-Length"])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Fatal(headers)
+	_ = content_length
+	_ = headers
 }

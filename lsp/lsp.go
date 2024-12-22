@@ -4,45 +4,17 @@ import (
 	"bufio"
 	"custom-lsp/rpc"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 )
 
-// TODO: Should this go inside the rpc module instead?
-func readHeader(r io.Reader) ([]string, error) {
-	reader := bufio.NewReader(r)
-
-    header := []string{} // TODO: make this a map instead?
-	var last_byte byte
-	for reader.Buffered() > 0 {
-		b, err := reader.ReadByte()
-		if err != nil {
-			return nil, err
-		}
-		if b == '\r' {
-			// end of header section; add header to header string slice
-			continue
-		} else if b == '\n' {
-			if last_byte == '\n' {
-				return header, nil
-			}
-			continue
-		}
-
-		last_byte = b
+func Start() {
+	headers, err := rpc.ReadHeader(os.Stdin)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to read header: %v", err))
 	}
 
-	return nil, nil
-}
-
-func readContent() string {
-	return ""
-}
-
-func Start() {
-
-	readHeader(os.Stdin)
+	_ = headers // TODO
 
 	// Quick test
 	out := bufio.NewWriter(os.Stdout)

@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
 )
 
 const (
@@ -68,12 +70,62 @@ type (
 	}
 )
 
+func ReadHeaders(r io.Reader) (map[string]string, error) {
+	var b bytes.Buffer
+	_, err := b.ReadFrom(r)
+	if err != nil {
+		return nil, err
+	}
+
+	headers := make(map[string]string)
+
+	line := ""
+	last_byte := byte(0)
+	field_name := ""
+	for b.Available() > 0 {
+		b, err := b.ReadByte()
+		if err != nil {
+			return nil, err
+		}
+
+		switch b {
+		case 0:
+			break
+		case '\r':
+			// ignore
+			break
+		case '\n':
+			// Add line to header map
+			headers[field_name] = strings.TrimSpace(field_name)
+
+			// check if the header section is over
+			if last_byte == '\n' {
+				// end of headers
+				return headers, nil
+			}
+			break
+		case ':':
+			field_name = strings.TrimSpace(line)
+			break
+		default:
+			line += string(b)
+			break
+		}
+
+		last_byte = b
+	}
+
+	return nil, fmt.Errorf("Unexpected end of input. Ended with: %+v", headers)
+}
+
 func (r *Response) Format() {
 	r.JsonRPC = "2.0"
 }
+
 func (r *Request) Format() {
 	r.JsonRPC = "2.0"
 }
+
 func (n *Notification) Format() {
 	n.JsonRPC = "2.0"
 }
