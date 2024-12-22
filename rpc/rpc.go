@@ -52,14 +52,14 @@ type (
 	}
 
 	Request struct {
-		JsonRPC string `json:"jsonrpc"` // MUST be "2.0"
+		JsonRPC string `json:"jsonrpc"`
 		Id      int    `json:"id"`
 		Method  string `json:"method"`
 		Params  any    `json:"params,omitempty"`
 	}
 
 	Notification struct {
-		JsonRPC string   `json:"jsonrpc"` // MUST be "2.0"
+		JsonRPC string   `json:"jsonrpc"`
 		Method  string   `json:"method"`
 		Params  []string `json:"params,omitempty"`
 	}
@@ -80,52 +80,54 @@ type (
 
 // Read the header and content sections of an RPC and return their values. Returns and error on failure.
 func ReadRequest(r io.Reader) (header Header, content Request, err error) {
-    scanner := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(r)
 
-    // read the message headers
-    for scanner.Scan() {
-        line := scanner.Text()
-        if line == "" {
-            break
-        }
+	// read the message headers
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			break
+		}
 
-        field, value, found := strings.Cut(line, ":")
-        if !found {
-            return Header{}, Request{}, fmt.Errorf("Invalid header line: %v", header)
-        }
+		field, value, found := strings.Cut(line, ":")
+		if !found {
+			return Header{}, Request{}, fmt.Errorf("Invalid header line: %v", header)
+		}
 
-        field = strings.ToLower(strings.TrimSpace(field))
-        switch field {
-        case "content-length":
-            str := strings.TrimSpace(value)
-            content_length, err := strconv.Atoi(str)
-            if err != nil {
-                return Header{}, Request{}, err
-            }
-            header.ContentLength = content_length
-            break
-        case "content-type":
-            header.ContentType = strings.TrimSpace(value)
-            break
-        default:
-            return Header{}, Request{}, fmt.Errorf("Unknown header: \"%s\"", field)
-        }
-    }
+		field = strings.ToLower(strings.TrimSpace(field))
+		switch field {
+		case "content-length":
+			str := strings.TrimSpace(value)
+			content_length, err := strconv.Atoi(str)
+			if err != nil {
+				return Header{}, Request{}, err
+			}
+			header.ContentLength = content_length
+			break
+		case "content-type":
+			header.ContentType = strings.TrimSpace(value)
+			break
+		default:
+			return Header{}, Request{}, fmt.Errorf("Unknown header: \"%s\"", field)
+		}
+	}
 
-    // read the rest of the message content
-    content_body := ""
-    for scanner.Scan() {
-        content_body += scanner.Text()
-    }
+	// read the rest of the message content
+	content_body := ""
+	for scanner.Scan() {
+		content_body += scanner.Text()
+	}
 
 	if err := scanner.Err(); err != nil {
 		return Header{}, Request{}, err
 	}
 
-    err = json.Unmarshal([]byte(content_body), &content)
-    if err != nil {
-        return Header{}, Request{}, err
-    }
+	err = json.Unmarshal([]byte(content_body), &content)
+	if err != nil {
+		return Header{}, Request{}, err
+	}
+
+	// TODO: I might want to validate the JsonRPC value just to make sure that it's actually v2.0.
 
 	return header, content, nil
 }

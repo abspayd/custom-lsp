@@ -59,5 +59,6 @@ func TestStart(t *testing.T) {
         t.Fatal(err)
     }
 
+    // TODO: make this actually test something (e.g. are we getting a valid/expected response back?)
     t.Fatal(string(output))
 }
