@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"reflect"
-	"strconv"
 	"testing"
 )
 
@@ -103,31 +102,48 @@ func TestReadHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected_headers := map[string]string{
-		"Content-Length": string(fmt.Sprintf("%d", len(content))),
-	}
+	encoded_request, err := rpc.Encode(request)
 
 	r, w := io.Pipe()
 
-	encoded_request, err := rpc.Encode(request)
-
 	// write to the pipe
-    go func() {
-        w.Close()
-        w.Write([]byte(encoded_request))
-    }()
+	go func() {
+		defer w.Close()
+		w.Write([]byte(encoded_request))
+	}()
 
-	headers, err := rpc.ReadHeaders(r)
-	if err != nil && err != io.EOF {
-		t.Fatal(err)
-	}
-
-	content_length, err := strconv.Atoi(expected_headers["Content-Length"])
+	headers, _, err := rpc.ReadRequest(r)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Fatal(headers)
-	_ = content_length
-	_ = headers
+	if headers.ContentLength != len(content) {
+		t.Fatalf("Header got content length = %d, expected %d.", headers.ContentLength, len(content))
+	}
+}
+
+func TestReadContent(t *testing.T) {
+	request := &rpc.Request{
+		JsonRPC: "2.0",
+		Id:      1,
+		Method:  "textDocument/rename",
+	}
+	encoded_request, err := rpc.Encode(request)
+
+	r, w := io.Pipe()
+
+	go func() {
+		defer w.Close()
+		w.Write([]byte(encoded_request))
+	}()
+
+	// read the headers to move the reader forward (does this work?)
+	_, c, err := rpc.ReadRequest(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+    
+    if c.JsonRPC != request.JsonRPC || c.Id != request.Id || c.Method != request.Method {
+        t.Fatalf("Got %#v, expected %#v", c, request)
+    }
 }

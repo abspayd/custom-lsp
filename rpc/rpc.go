@@ -5,10 +5,12 @@ package rpc
 //  https://www.jsonrpc.org/specification
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -43,6 +45,12 @@ type (
 		Format()
 	}
 
+	// RPC message header
+	Header struct {
+		ContentLength int
+		ContentType   string
+	}
+
 	Request struct {
 		JsonRPC string `json:"jsonrpc"` // MUST be "2.0"
 		Id      int    `json:"id"`
@@ -70,52 +78,56 @@ type (
 	}
 )
 
-func ReadHeaders(r io.Reader) (map[string]string, error) {
-	var b bytes.Buffer
-	_, err := b.ReadFrom(r)
-	if err != nil {
-		return nil, err
+// Read the header and content sections of an RPC and return their values. Returns and error on failure.
+func ReadRequest(r io.Reader) (header Header, content Request, err error) {
+    scanner := bufio.NewScanner(r)
+
+    // read the message headers
+    for scanner.Scan() {
+        line := scanner.Text()
+        if line == "" {
+            break
+        }
+
+        field, value, found := strings.Cut(line, ":")
+        if !found {
+            return Header{}, Request{}, fmt.Errorf("Invalid header line: %v", header)
+        }
+
+        field = strings.ToLower(strings.TrimSpace(field))
+        switch field {
+        case "content-length":
+            str := strings.TrimSpace(value)
+            content_length, err := strconv.Atoi(str)
+            if err != nil {
+                return Header{}, Request{}, err
+            }
+            header.ContentLength = content_length
+            break
+        case "content-type":
+            header.ContentType = strings.TrimSpace(value)
+            break
+        default:
+            return Header{}, Request{}, fmt.Errorf("Unknown header: \"%s\"", field)
+        }
+    }
+
+    // read the rest of the message content
+    content_body := ""
+    for scanner.Scan() {
+        content_body += scanner.Text()
+    }
+
+	if err := scanner.Err(); err != nil {
+		return Header{}, Request{}, err
 	}
 
-	headers := make(map[string]string)
+    err = json.Unmarshal([]byte(content_body), &content)
+    if err != nil {
+        return Header{}, Request{}, err
+    }
 
-	line := ""
-	last_byte := byte(0)
-	field_name := ""
-	for b.Available() > 0 {
-		b, err := b.ReadByte()
-		if err != nil {
-			return nil, err
-		}
-
-		switch b {
-		case 0:
-			break
-		case '\r':
-			// ignore
-			break
-		case '\n':
-			// Add line to header map
-			headers[field_name] = strings.TrimSpace(field_name)
-
-			// check if the header section is over
-			if last_byte == '\n' {
-				// end of headers
-				return headers, nil
-			}
-			break
-		case ':':
-			field_name = strings.TrimSpace(line)
-			break
-		default:
-			line += string(b)
-			break
-		}
-
-		last_byte = b
-	}
-
-	return nil, fmt.Errorf("Unexpected end of input. Ended with: %+v", headers)
+	return header, content, nil
 }
 
 func (r *Response) Format() {
