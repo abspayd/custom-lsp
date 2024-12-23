@@ -12,14 +12,14 @@ func TestStart(t *testing.T) {
 	// client request
 	request := rpc.Request{
 		Id:     1,
-		Method: "textDocument/rename",
+		Method: "exit",
 		Params: struct {
 			Name string `json:"name"`
 		}{
 			Name: "foo",
 		},
 	}
-	encoded_request, err := rpc.Encode(&request)
+	encoded_request, err := rpc.Encode(request)
 	if err != nil {
 		t.Fatal(err)
 	}

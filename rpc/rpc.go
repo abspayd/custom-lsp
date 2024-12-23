@@ -42,7 +42,7 @@ const (
 
 type (
 	Message interface {
-		Format()
+        Send(io.Writer) error
 	}
 
 	// RPC message header
@@ -56,12 +56,6 @@ type (
 		Id      int    `json:"id"`
 		Method  string `json:"method"`
 		Params  any    `json:"params,omitempty"`
-	}
-
-	Notification struct {
-		JsonRPC string   `json:"jsonrpc"`
-		Method  string   `json:"method"`
-		Params  []string `json:"params,omitempty"`
 	}
 
 	Response struct {
@@ -133,7 +127,7 @@ func ReadRequest(r io.Reader) (header Header, content Request, err error) {
 }
 
 func (r *Response) Send(w io.Writer) error {
-	encoded_response, err := Encode(r)
+	encoded_response, err := Encode(*r)
 	if err != nil {
 		return err
 	}
@@ -150,12 +144,7 @@ func (r *Request) Format() {
 	r.JsonRPC = "2.0"
 }
 
-func (n *Notification) Format() {
-	n.JsonRPC = "2.0"
-}
-
-func Encode(msg Message) (string, error) {
-	msg.Format()
+func Encode[M Request | Response](msg M) (string, error) {
 	content, err := json.Marshal(msg)
 	if err != nil {
 		return "", err
@@ -176,19 +165,4 @@ func DecodeRequest(data []byte) (Request, error) {
 	}
 
 	return request, nil
-}
-
-func DecodeNotification(data []byte) (Notification, error) {
-	_, content, found := bytes.Cut(data, []byte("\r\n\r\n"))
-	if !found {
-		return Notification{}, fmt.Errorf("Unable to find message content: %s", data)
-	}
-
-	var notification Notification
-	err := json.Unmarshal(content, &notification)
-	if err != nil {
-		return Notification{}, err
-	}
-
-	return notification, nil
 }

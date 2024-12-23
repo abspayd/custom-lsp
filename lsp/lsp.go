@@ -30,8 +30,8 @@ func shutdown() (string, error) {
 
 func exit() (string, error) {
 	// TODO
-    // This is sent via a notification; do not respond.
-	return "ok", nil
+	// This is sent via a notification; do not respond.
+	return "", nil
 }
 
 func Start() {
@@ -41,6 +41,16 @@ func Start() {
 			panic(fmt.Sprintf("Unable to read request: %v", err))
 		}
 
+		switch content.Method {
+		case "shutdown":
+			// this is sent as a request
+			break
+		case "exit":
+			// this is sent as a notification
+            os.Stdout.Close()
+            return
+		}
+
 		f, ok := accepted_methods[content.Method]
 		if !ok {
 			// respond with error method not found (rpc.MethodNotFound)
@@ -48,7 +58,7 @@ func Start() {
 				Code:    rpc.MethodNotFound,
 				Message: fmt.Sprintf("Unknown method: \"%s\"", content.Method),
 			}
-			response := &rpc.Response{
+			response := rpc.Response{
 				JsonRPC: "2.0",
 				Id:      content.Id,
 				Error:   &err_msg,
@@ -69,7 +79,7 @@ func Start() {
 			panic(fmt.Sprintf("Method %s returned with an error: %v", content.Method, err))
 		}
 
-		response := &rpc.Response{
+		response := rpc.Response{
 			JsonRPC: "2.0",
 			Id:      content.Id,
 			Result:  res,
@@ -80,15 +90,5 @@ func Start() {
 		}
 
 		fmt.Print(encoded_response)
-
-		// TODO: response
-		// response := &rpc.Response{
-		//     JsonRPC: "2.0",
-		//     Id: id,
-		//     Result: ,
-		// }
-
-		os.Stdout.Close()
-		return // loop one time (for now)
 	}
 }
