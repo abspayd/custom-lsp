@@ -10,8 +10,6 @@ var (
 	accepted_methods = map[string]func() (string, error){
 		"textDocument/rename":  rename,
 		"textDocument/context": context,
-		"shutdown":             shutdown,
-		"exit":                 exit,
 	}
 )
 
@@ -21,17 +19,6 @@ func rename() (string, error) {
 
 func context() (string, error) {
 	return "TODO: Context", nil
-}
-
-func shutdown() (string, error) {
-	// TODO
-	return "ok", nil
-}
-
-func exit() (string, error) {
-	// TODO
-	// This is sent via a notification; do not respond.
-	return "", nil
 }
 
 func Start() {

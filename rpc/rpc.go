@@ -42,7 +42,7 @@ const (
 
 type (
 	Message interface {
-        Send(io.Writer) error
+		Send(io.Writer) error
 	}
 
 	// RPC message header
