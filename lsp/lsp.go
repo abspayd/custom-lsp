@@ -8,25 +8,69 @@ import (
 
 var (
 	accepted_methods = map[string]func() (string, error){
-		"textDocument/rename":  rename,
-		"textDocument/context": context,
+		"textDocument/rename":  Rename,
+		"textDocument/context": Context,
 	}
 )
 
-func rename() (string, error) {
+type Server struct {
+    Initialized bool
+}
+
+func Rename() (string, error) {
 	return "TODO: Rename", nil
 }
 
-func context() (string, error) {
+func Context() (string, error) {
 	return "TODO: Context", nil
 }
 
+func (server Server) Initialize() (string, error) {
+    if server.Initialized {
+        return "", fmt.Errorf("Server is already initialized")
+    }
+
+    // TODO: listen for initialize request
+    _, content, err := rpc.ReadRequest(os.Stdin)
+    if err != nil {
+        return "", err
+    }
+    if content.Method != "initialize" {
+        // TODO: return error
+    }
+
+    // TODO
+
+	return "", nil
+}
+
+func (server Server) Error(message rpc.ResponseError) error {
+
+    return nil
+}
+
+func (server Server) Listen() {
+    if !server.Initialized {
+        // TODO: Send error message and exit.
+    }
+}
+
+func (server Server) Exit() {
+
+}
+
+// Depricated: this is getting replaced by Server.Listen()
 func Start() {
+    initialized := false
 	for {
 		_, content, err := rpc.ReadRequest(os.Stdin)
 		if err != nil {
 			panic(fmt.Sprintf("Unable to read request: %v", err))
 		}
+
+        if !initialized && content.Method != "initialize" {
+
+        }
 
 		switch content.Method {
 		case "shutdown":
@@ -34,8 +78,8 @@ func Start() {
 			break
 		case "exit":
 			// this is sent as a notification
-            os.Stdout.Close()
-            return
+			os.Stdout.Close()
+			return
 		}
 
 		f, ok := accepted_methods[content.Method]

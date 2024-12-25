@@ -62,3 +62,7 @@ func TestStart(t *testing.T) {
     // TODO: make this actually test something (e.g. are we getting a valid/expected response back?)
     t.Fatal(string(output))
 }
+
+func TestRename(t *testing.T) {
+
+}

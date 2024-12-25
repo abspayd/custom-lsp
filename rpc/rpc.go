@@ -111,7 +111,6 @@ func ReadRequest(r io.Reader) (header Header, content Request, err error) {
 	for scanner.Scan() {
 		content_body += scanner.Text()
 	}
-
 	if err := scanner.Err(); err != nil {
 		return Header{}, Request{}, err
 	}
@@ -134,14 +133,6 @@ func (r *Response) Send(w io.Writer) error {
 	r.JsonRPC = "2.0"
 	w.Write([]byte(encoded_response))
 	return nil
-}
-
-func (r *Response) Format() {
-	r.JsonRPC = "2.0"
-}
-
-func (r *Request) Format() {
-	r.JsonRPC = "2.0"
 }
 
 func Encode[M Request | Response](msg M) (string, error) {
