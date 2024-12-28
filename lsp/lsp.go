@@ -6,6 +6,33 @@ import (
 	"os"
 )
 
+const (
+	// Defined by JSON-RPC
+	ParseError     = -32700
+	InvalidRequest = -32600
+	MethodNotFound = -32601
+	InvalidParams  = -32602
+	InternalError  = -32603
+
+	// Start range of JSON-RPC reserved error codes
+	JsonRpcReservedErrorRangeStart = -32099
+
+	// Error code indicating that a server received a notification or
+	// request before the server has received the `initialize` request.
+	ServerNotInitialized = -32002
+	UnknownErrorCode     = -32001
+
+	// End of JSON-RPC reserved error code range
+	JsonRpcReservedErrorRangeEnd = -32000
+
+	RequestFailed            = -32803
+	ServerCancelled          = -32802
+	ContentModified          = -32801
+	RequestCancelled         = -32800
+	LspReservedErrorRangeEnd = -32800
+)
+
+
 var (
 	accepted_methods = map[string]func() (string, error){
 		"textDocument/rename":  Rename,
