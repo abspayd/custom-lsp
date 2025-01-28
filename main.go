@@ -1,7 +1,9 @@
 package main
 
-import "custom-lsp/lsp"
+import (
+    "fmt"
+)
 
 func main() {
-    lsp.Start()
+
 }
