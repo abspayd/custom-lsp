@@ -76,6 +76,23 @@ func handleMessage(logger *log.Logger, state analysis.State, method string, cont
 		for _, change := range notification.Params.ContentChanges {
 			state.UpdateDocument(notification.Params.TextDocument.URI, change.Text)
 		}
+	case "textDocument/hover":
+		var request lsp.HoverRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			logger.Printf("textDocument/hover: %s", err)
+			return
+		}
+
+		logger.Printf("Hover: %s {%d, %d}", request.Params.TextDocument, request.Params.Position.Character, request.Params.Position.Line)
+
+		// send response
+		msg := lsp.NewHoverResponse(request.ID, "Hello")
+		reply := rpc.EncodeMessage(msg)
+
+		writer := os.Stdout
+		writer.Write([]byte(reply))
+
+		logger.Print("Sent a reply")
 	}
 }
 
